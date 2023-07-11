@@ -1,3 +1,4 @@
+// Package types provides common game types.
 package types
 
 import (

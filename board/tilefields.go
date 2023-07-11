@@ -1,6 +1,6 @@
 package board
 
-import "github.com/stfnmllr/go-ricrob/game/types"
+import "github.com/go-ricrob/game/types"
 
 // tile fields orientation: 'center' field position x,y = 0,0
 var tileFields = map[types.TileID]map[types.Coordinate]Field{

@@ -3,7 +3,7 @@ package board
 import (
 	"testing"
 
-	"github.com/stfnmllr/go-ricrob/game/types"
+	"github.com/go-ricrob/game/types"
 )
 
 func TestBoard(t *testing.T) {

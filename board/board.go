@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/stfnmllr/go-ricrob/game/types"
+	"github.com/go-ricrob/game/types"
 )
 
 /*
