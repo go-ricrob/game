@@ -46,24 +46,24 @@ func TestBoard(t *testing.T) {
 
 				{X: 0, Y: 10}: {walls: types.West},
 				{X: 1, Y: 10}: {},
-				{X: 2, Y: 10}: {walls: types.South | types.East, target: types.Targets[types.TnRedStar]},
+				{X: 2, Y: 10}: {walls: types.South | types.East, symbol: types.Star, color: types.Red},
 				{X: 3, Y: 10}: {walls: types.West},
 				{X: 4, Y: 10}: {},
 				{X: 5, Y: 10}: {},
 				{X: 6, Y: 10}: {},
-				{X: 7, Y: 10}: {walls: types.South | types.East, target: types.Targets[types.TnCosmic]},
+				{X: 7, Y: 10}: {walls: types.South | types.East, symbol: types.Cosmic, color: types.CosmicColor},
 
 				{X: 0, Y: 11}: {walls: types.West},
 				{X: 1, Y: 11}: {},
 				{X: 2, Y: 11}: {},
 				{X: 3, Y: 11}: {},
 				{X: 4, Y: 11}: {walls: types.East},
-				{X: 5, Y: 11}: {walls: types.West | types.North, target: types.Targets[types.TnGreenSaturn]},
+				{X: 5, Y: 11}: {walls: types.West | types.North, symbol: types.Saturn, color: types.Green},
 				{X: 6, Y: 11}: {},
 				{X: 7, Y: 11}: {},
 
 				{X: 0, Y: 12}: {walls: types.West},
-				{X: 1, Y: 12}: {walls: types.East | types.North, target: types.Targets[types.TnYellowPyramid]},
+				{X: 1, Y: 12}: {walls: types.East | types.North, symbol: types.Pyramid, color: types.Yellow},
 				{X: 2, Y: 12}: {walls: types.West},
 				{X: 3, Y: 12}: {},
 				{X: 4, Y: 12}: {},
@@ -86,7 +86,7 @@ func TestBoard(t *testing.T) {
 				{X: 3, Y: 14}: {},
 				{X: 4, Y: 14}: {},
 				{X: 5, Y: 14}: {walls: types.East},
-				{X: 6, Y: 14}: {walls: types.West | types.South, target: types.Targets[types.TnBlueMoon]},
+				{X: 6, Y: 14}: {walls: types.West | types.South, symbol: types.Moon, color: types.Blue},
 				{X: 7, Y: 14}: {},
 
 				{X: 0, Y: 15}: {walls: types.West | types.North},
@@ -114,7 +114,7 @@ func TestBoard(t *testing.T) {
 				{X: 8, Y: 9}:  {walls: types.South},
 				{X: 9, Y: 9}:  {},
 				{X: 10, Y: 9}: {},
-				{X: 11, Y: 9}: {walls: types.East | types.North, target: types.Targets[types.TnYellowMoon]},
+				{X: 11, Y: 9}: {walls: types.East | types.North, symbol: types.Moon, color: types.Yellow},
 				{X: 12, Y: 9}: {walls: types.West},
 				{X: 13, Y: 9}: {},
 				{X: 14, Y: 9}: {walls: types.North},
@@ -126,7 +126,7 @@ func TestBoard(t *testing.T) {
 				{X: 11, Y: 10}: {walls: types.South},
 				{X: 12, Y: 10}: {},
 				{X: 13, Y: 10}: {walls: types.East},
-				{X: 14, Y: 10}: {walls: types.West | types.South, target: types.Targets[types.TnGreenStar]},
+				{X: 14, Y: 10}: {walls: types.West | types.South, symbol: types.Star, color: types.Green},
 				{X: 15, Y: 10}: {walls: types.East},
 
 				{X: 8, Y: 11}:  {},
@@ -148,7 +148,7 @@ func TestBoard(t *testing.T) {
 				{X: 15, Y: 12}: {walls: types.East | types.South},
 
 				{X: 8, Y: 13}:  {},
-				{X: 9, Y: 13}:  {walls: types.East | types.South, target: types.Targets[types.TnBluePyramid]},
+				{X: 9, Y: 13}:  {walls: types.East | types.South, symbol: types.Pyramid, color: types.Blue},
 				{X: 10, Y: 13}: {walls: types.West},
 				{X: 11, Y: 13}: {},
 				{X: 12, Y: 13}: {},
@@ -161,7 +161,7 @@ func TestBoard(t *testing.T) {
 				{X: 10, Y: 14}: {},
 				{X: 11, Y: 14}: {},
 				{X: 12, Y: 14}: {walls: types.East},
-				{X: 13, Y: 14}: {walls: types.West | types.North, target: types.Targets[types.TnRedSaturn]},
+				{X: 13, Y: 14}: {walls: types.West | types.North, symbol: types.Saturn, color: types.Red},
 				{X: 14, Y: 14}: {},
 				{X: 15, Y: 14}: {walls: types.East},
 
@@ -190,7 +190,7 @@ func TestBoard(t *testing.T) {
 				{X: 8, Y: 1}:  {},
 				{X: 9, Y: 1}:  {},
 				{X: 10, Y: 1}: {},
-				{X: 11, Y: 1}: {walls: types.East | types.South, target: types.Targets[types.TnRedMoon]},
+				{X: 11, Y: 1}: {walls: types.East | types.South, symbol: types.Moon, color: types.Red},
 				{X: 12, Y: 1}: {walls: types.West},
 				{X: 13, Y: 1}: {},
 				{X: 14, Y: 1}: {walls: types.North},
@@ -202,11 +202,11 @@ func TestBoard(t *testing.T) {
 				{X: 11, Y: 2}: {},
 				{X: 12, Y: 2}: {},
 				{X: 13, Y: 2}: {walls: types.East},
-				{X: 14, Y: 2}: {walls: types.West | types.South, target: types.Targets[types.TnGreenPyramid]},
+				{X: 14, Y: 2}: {walls: types.West | types.South, symbol: types.Pyramid, color: types.Green},
 				{X: 15, Y: 2}: {walls: types.East},
 
 				{X: 8, Y: 3}:  {walls: types.East},
-				{X: 9, Y: 3}:  {walls: types.West | types.North, target: types.Targets[types.TnYellowStar]},
+				{X: 9, Y: 3}:  {walls: types.West | types.North, symbol: types.Star, color: types.Yellow},
 				{X: 10, Y: 3}: {},
 				{X: 11, Y: 3}: {},
 				{X: 12, Y: 3}: {},
@@ -236,7 +236,7 @@ func TestBoard(t *testing.T) {
 				{X: 9, Y: 6}:  {},
 				{X: 10, Y: 6}: {},
 				{X: 11, Y: 6}: {},
-				{X: 12, Y: 6}: {walls: types.East | types.North, target: types.Targets[types.TnBlueSaturn]},
+				{X: 12, Y: 6}: {walls: types.East | types.North, symbol: types.Saturn, color: types.Blue},
 				{X: 13, Y: 6}: {walls: types.West},
 				{X: 14, Y: 6}: {},
 				{X: 15, Y: 6}: {walls: types.East | types.South},
@@ -264,7 +264,7 @@ func TestBoard(t *testing.T) {
 				{X: 7, Y: 0}: {walls: types.South},
 
 				{X: 0, Y: 1}: {walls: types.West},
-				{X: 1, Y: 1}: {walls: types.East | types.South, target: types.Targets[types.TnRedPyramid]},
+				{X: 1, Y: 1}: {walls: types.East | types.South, symbol: types.Pyramid, color: types.Red},
 				{X: 2, Y: 1}: {walls: types.West},
 				{X: 3, Y: 1}: {},
 				{X: 4, Y: 1}: {},
@@ -276,7 +276,7 @@ func TestBoard(t *testing.T) {
 				{X: 1, Y: 2}: {},
 				{X: 2, Y: 2}: {},
 				{X: 3, Y: 2}: {},
-				{X: 4, Y: 2}: {walls: types.East | types.North, target: types.Targets[types.TnBlueStar]},
+				{X: 4, Y: 2}: {walls: types.East | types.North, symbol: types.Star, color: types.Blue},
 				{X: 5, Y: 2}: {walls: types.West},
 				{X: 6, Y: 2}: {},
 				{X: 7, Y: 2}: {},
@@ -310,7 +310,7 @@ func TestBoard(t *testing.T) {
 
 				{X: 0, Y: 6}: {walls: types.West},
 				{X: 1, Y: 6}: {walls: types.East},
-				{X: 2, Y: 6}: {walls: types.West | types.North, target: types.Targets[types.TnGreenMoon]},
+				{X: 2, Y: 6}: {walls: types.West | types.North, symbol: types.Moon, color: types.Green},
 				{X: 3, Y: 6}: {},
 				{X: 4, Y: 6}: {},
 				{X: 5, Y: 6}: {walls: types.North},
@@ -322,7 +322,7 @@ func TestBoard(t *testing.T) {
 				{X: 2, Y: 7}: {walls: types.South},
 				{X: 3, Y: 7}: {},
 				{X: 4, Y: 7}: {walls: types.East},
-				{X: 5, Y: 7}: {walls: types.West | types.South, target: types.Targets[types.TnYellowSaturn]},
+				{X: 5, Y: 7}: {walls: types.West | types.South, symbol: types.Saturn, color: types.Yellow},
 				{X: 6, Y: 7}: {walls: types.East},
 				{X: 7, Y: 7}: {walls: types.West | types.South},
 			},
@@ -335,7 +335,7 @@ func TestBoard(t *testing.T) {
 			for p, f1 := range test.fields {
 				f2 := b.Field(p.X, p.Y)
 				// if !reflect.DeepEqual(f1, f2) { // no moves check yet
-				if f1.walls != f2.walls || f1.target != f2.target {
+				if f1.walls != f2.walls || f1.symbol != f2.symbol || f1.color != f2.color {
 					t.Fatalf("field %d,%d: %v - expected %v", p.X, p.Y, f2, f1)
 				}
 			}

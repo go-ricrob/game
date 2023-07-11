@@ -48,31 +48,26 @@ var wallRotations = map[types.TilePosition]rotate{
 // Field is the type representing a field of a board.
 type Field struct {
 	walls   types.Direction
-	target  types.Target
+	symbol  types.Symbol
+	color   types.Color
 	targets map[types.Direction]types.Coordinate
 }
 
 func (f *Field) String() string {
-	return fmt.Sprintf("{%s %s %v}", f.walls, f.target, f.targets)
+	return fmt.Sprintf("{%s %s %s %v}", f.walls, f.symbol, f.color, f.targets)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
 // Use own marshaler to avoid public fields in struct Field.
 func (f *Field) MarshalJSON() ([]byte, error) {
-	targetFn := func(t types.Target) *types.Target {
-		if t.Symbol == 0 && t.Color == 0 {
-			return nil
-		}
-		return &t
-	}
-
 	return json.Marshal(struct {
-		Walls types.Direction `json:"walls,omitempty"`
-		// need to use pointer here, so that omitempy does work for target
-		Target *types.Target `json:"target,omitempty"`
+		Walls  types.Direction `json:"walls,omitempty"`
+		Symbol types.Symbol    `json:"symbol,omitempty"`
+		Color  types.Color     `json:"color,omitempty"`
 	}{
 		Walls:  f.walls,
-		Target: targetFn(f.target),
+		Symbol: f.symbol,
+		Color:  f.color,
 	})
 }
 
@@ -152,7 +147,8 @@ func NewBoard(tiles map[types.TilePosition]types.TileID) *Board {
 			x, y := posShifts[p](posRotations[p](c.X, c.Y)) // rotate and shift
 			field := b.fields[fieldIdx(x, y)]
 			field.walls = wallRotations[p](f.walls)
-			field.target = f.target
+			field.symbol = f.symbol
+			field.color = f.color
 		}
 	}
 
@@ -210,13 +206,13 @@ func NewBoard(tiles map[types.TilePosition]types.TileID) *Board {
 func (b *Board) Field(x, y int) *Field { return b.fields[fieldIdx(x, y)] }
 
 // TargetCoordinate returns the coordinate of the target.
-func (b *Board) TargetCoordinate(target types.Target) (x, y int) {
+func (b *Board) TargetCoordinate(symbol types.Symbol, color types.Color) (x, y int) {
 	for idx, field := range b.fields {
-		if field.target == target {
+		if field.symbol == symbol && field.color == color {
 			return fieldCoord(idx)
 		}
 	}
-	panic(fmt.Errorf("invalid target %s", target)) // should never happen
+	panic(fmt.Errorf("invalid target: symbol %s color %s", symbol, color)) // should never happen
 }
 
 // Move returns the coordinate of a target field moving a robot in one of the directions.
