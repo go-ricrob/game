@@ -1,3 +1,3 @@
-module github.com/stfnmllr/go-ricrob/game
+module github.com/go-ricrob/game
 
 go 1.20
