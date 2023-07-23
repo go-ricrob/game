@@ -2,110 +2,41 @@
 package board
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 
-	. "github.com/go-ricrob/game/types"
+	"github.com/go-ricrob/game/coord"
+	"github.com/go-ricrob/game/types"
 )
 
 const (
-	numBoardFields = 16
-	numTileFields  = numBoardFields / 2
+	numBoardField = 16
+	numTileField  = numBoardField / 2
 )
 
-// TilePosition defines the position of a tile on the board.
-type TilePosition byte
-
-// TilePosition constants.
-const (
-	TopLeft TilePosition = iota
-	TopRight
-	BottomLeft
-	BottomRight
-)
-
-var tilePositionStrs = []string{"topleft", "topright", "bottomleft", "bottomright"}
-
-func (p TilePosition) String() string {
-	if int(p) >= len(tilePositionStrs) {
-		return fmt.Sprintf("invalid tile position %d", p)
-	}
-	return tilePositionStrs[p]
-}
-
-// Direction is the type of the 'compass direction' of a wall.
-type Direction byte
-
-// Direction bitmap constants. Use bitmap to define field walls in one byte.
-const (
-	North Direction = 1 << iota
-	East
-	South
-	West
-)
-
-var directionStrs = map[Direction]string{North: "north", East: "east", South: "south", West: "west"}
-
-func (d Direction) String() string {
-	dirs := []string{}
-	for dir, s := range directionStrs {
-		if dir&d != 0 {
-			dirs = append(dirs, s)
-		}
-	}
-	return fmt.Sprintf("[%s]", strings.Join(dirs, "|"))
-}
-
-// Directions is the set of valid directions.
-var Directions = []Direction{North, East, South, West}
-
-// Symbol is the type of a symbol.
-type Symbol byte
-
-// Symbol constants.
-const (
-	NoSymbol = iota
-	Pyramid
-	Star
-	Moon
-	Saturn
-	Cosmic
-)
-
-var symbolStrs = []string{"", "Pyramid", "Star", "Moon", "Saturn", "Cosmic"}
-
-func (s Symbol) String() string {
-	if int(s) >= len(symbolStrs) {
-		return fmt.Sprintf("invalid symbol %d", s)
-	}
-	return symbolStrs[s]
-}
-
-// Symbols is the set of valid symbols.
-var Symbols = []Symbol{Pyramid, Star, Moon, Saturn, Cosmic}
+// NumField is the number of board fields.
+const NumField = numBoardField * numBoardField
 
 /*
 rotate tile clockwise
 */
 type transform func(x int, y int) (int, int)
 
-var posRotations = map[TilePosition]transform{
-	TopLeft:     func(x, y int) (int, int) { return (numTileFields - 1) - y, x },                       // rotate 270 degree
-	TopRight:    func(x, y int) (int, int) { return x, y },                                             // rotate 0 degree
-	BottomRight: func(x, y int) (int, int) { return y, (numTileFields - 1) - x },                       // rotate 90 degree
-	BottomLeft:  func(x, y int) (int, int) { return (numTileFields - 1) - x, (numTileFields - 1) - y }, // rotate 180 degree
+var posRotations = [NumTile]transform{
+	TopLeft:     func(x, y int) (int, int) { return (numTileField - 1) - y, x },                      // rotate 270 degree
+	TopRight:    func(x, y int) (int, int) { return x, y },                                           // rotate 0 degree
+	BottomRight: func(x, y int) (int, int) { return y, (numTileField - 1) - x },                      // rotate 90 degree
+	BottomLeft:  func(x, y int) (int, int) { return (numTileField - 1) - x, (numTileField - 1) - y }, // rotate 180 degree
 }
 
-var posShifts = map[TilePosition]transform{
-	TopLeft:     func(x, y int) (int, int) { return x, numTileFields + y },                 // shift up
-	TopRight:    func(x, y int) (int, int) { return numTileFields + x, numTileFields + y }, // shift up and right
-	BottomRight: func(x, y int) (int, int) { return numTileFields + x, y },                 // shift right
-	BottomLeft:  func(x, y int) (int, int) { return x, y },                                 // no shift
+var posShifts = [NumTile]transform{
+	TopLeft:     func(x, y int) (int, int) { return x, numTileField + y },                // shift up
+	TopRight:    func(x, y int) (int, int) { return numTileField + x, numTileField + y }, // shift up and right
+	BottomRight: func(x, y int) (int, int) { return numTileField + x, y },                // shift right
+	BottomLeft:  func(x, y int) (int, int) { return x, y },                               // no shift
 }
 
-func rotateWalls(d Direction, k int) Direction {
-	r := d << k     // shift k bits
+func rotateWalls(w Wall, k int) Wall {
+	r := w << k     // shift k bits
 	r |= r >> 4     // add overlow / rotate
 	return r & 0x0f //clear high bits
 }
@@ -113,169 +44,133 @@ func rotateWalls(d Direction, k int) Direction {
 /*
 rotate walls clockwise
 */
-type rotate func(d Direction) Direction
+type rotate func(w Wall) Wall
 
-var wallRotations = map[TilePosition]rotate{
-	TopLeft:     func(d Direction) Direction { return rotateWalls(d, 3) }, // rotate 270 degree- right bit shift 3
-	TopRight:    func(d Direction) Direction { return d },                 // rotate 0 degree - no shift
-	BottomRight: func(d Direction) Direction { return rotateWalls(d, 1) }, // rotate 90 degree - right bit shift 1
-	BottomLeft:  func(d Direction) Direction { return rotateWalls(d, 2) }, // rotate 180 degree - right bit shift 2
+var wallRotations = [NumTile]rotate{
+	TopLeft:     func(w Wall) Wall { return rotateWalls(w, 3) }, // rotate 270 degree- right bit shift 3
+	TopRight:    func(w Wall) Wall { return w },                 // rotate 0 degree - no shift
+	BottomRight: func(w Wall) Wall { return rotateWalls(w, 1) }, // rotate 90 degree - right bit shift 1
+	BottomLeft:  func(w Wall) Wall { return rotateWalls(w, 2) }, // rotate 180 degree - right bit shift 2
 }
 
 // Field is the type representing a field of a board.
 type Field struct {
-	walls   Direction
-	symbol  Symbol
-	color   Color
-	targets map[Direction]Coordinate
+	Walls   Wall        `json:"walls,omitempty"`
+	Symbol  Symbol      `json:"symbol,omitempty"`
+	Color   types.Color `json:"color,omitempty"`
+	Targets [types.NumDir]byte
 }
 
 func (f *Field) String() string {
-	return fmt.Sprintf("{%s %s %s %v}", f.walls, f.symbol, f.color, f.targets)
+	return fmt.Sprintf("{%s %s %s %v}", f.Walls, f.Symbol, f.Color, f.Targets)
 }
 
-// MarshalJSON implements the json.Marshaler interface.
-// Use own marshaler to avoid public fields in struct Field.
-func (f *Field) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Walls  Direction `json:"walls,omitempty"`
-		Symbol Symbol    `json:"symbol,omitempty"`
-		Color  Color     `json:"color,omitempty"`
-	}{
-		Walls:  f.walls,
-		Symbol: f.symbol,
-		Color:  f.color,
-	})
-}
+func (f *Field) hasWall(w Wall) bool { return f.Walls&w != 0 }
 
-// Symbol returns the symbol of a field.
-func (f *Field) Symbol() Symbol { return f.symbol }
-
-// Color returns the color of a field.
-func (f *Field) Color() Color { return f.color }
-
-func (f *Field) hasWall(d Direction) bool { return f.walls&d != 0 }
-
-func (f *Field) addWall(dirs ...Direction) {
-	for _, d := range dirs {
-		f.walls |= d
+func (f *Field) addWall(walls ...Wall) {
+	for _, w := range walls {
+		f.Walls |= w
 	}
 }
-
-type moveFn func(robots map[Color]Coordinate, color Color) (x, y int, ok bool)
 
 // Board is the type representing a board.
 type Board struct {
-	fields []*Field
-	Moves  map[Direction]moveFn
+	Fields [NumField]*Field
 }
 
-func fieldIdx(x, y int) int             { return y*numBoardFields + x }
-func fieldCoord(idx int) (x int, y int) { return idx % numBoardFields, idx / numBoardFields }
-
-func (b *Board) calculateTarget(x0, y0 int, direction Direction) (int, int, bool) {
+func (b *Board) calculateTarget(x0, y0 int, dir types.Dir) (int, int) {
 	x, y := x0, y0
 
-	switch direction {
+	switch dir {
 	default:
-		panic(fmt.Sprintf("invalid direction %s", direction))
-	case East:
-		for b.Field(x, y0).walls&East == 0 {
+		panic(fmt.Sprintf("invalid direction %s", dir))
+	case types.East:
+		for b.Field(x, y0).Walls&EastWall == 0 {
 			x++
 		}
-	case West:
-		for b.Field(x, y0).walls&West == 0 {
+	case types.West:
+		for b.Field(x, y0).Walls&WestWall == 0 {
 			x--
 		}
-	case North:
-		for b.Field(x0, y).walls&North == 0 {
+	case types.North:
+		for b.Field(x0, y).Walls&NorthWall == 0 {
 			y++
 		}
-	case South:
-		for b.Field(x0, y).walls&South == 0 {
+	case types.South:
+		for b.Field(x0, y).Walls&SouthWall == 0 {
 			y--
 		}
 	}
-
-	if x == x0 && y == y0 {
-		return x0, y0, false
-	}
-	return x, y, true
+	return x, y
 }
 
 // New creates a new board instance. Parameter tiles needs to be valid - if not NewBoard will panic.
-func New(tileIDMap map[TilePosition]string) *Board {
-	numField := numBoardFields * numBoardFields
-	b := &Board{fields: make([]*Field, numField)}
-	b.Moves = map[Direction]moveFn{
-		North: b.moveNorth,
-		East:  b.moveEast,
-		South: b.moveSouth,
-		West:  b.moveWest,
-	}
+func New(tileIDs [NumTile]string) *Board {
+	b := &Board{}
 	// init fields
-	for i := 0; i < numField; i++ {
-		b.fields[i] = &Field{targets: map[Direction]Coordinate{}}
+	for i := 0; i < NumField; i++ {
+		b.Fields[i] = new(Field)
 	}
 
 	// set tile fields
-	for p, id := range tileIDMap {
+	for p, id := range tileIDs {
 		fields, ok := tiles[id]
 		if !ok {
 			panic(fmt.Errorf("invalid tileID: %v", id))
 		}
 		for c, f := range fields {
-			x, y := posShifts[p](posRotations[p](c.X, c.Y)) // rotate and shift
-			field := b.fields[fieldIdx(x, y)]
-			field.walls = wallRotations[p](f.walls)
-			field.symbol = f.symbol
-			field.color = f.color
+			x, y := posShifts[p](posRotations[p](coord.X(c), coord.Y(c))) // rotate and shift
+			field := b.Fields[coord.Ctob(x, y)]
+			field.Walls = wallRotations[p](f.Walls)
+			field.Symbol = f.Symbol
+			field.Color = f.Color
 		}
 	}
 
 	// set outer walls
-	for x := 0; x < numBoardFields; x++ {
-		b.fields[fieldIdx(x, numBoardFields-1)].addWall(North) // top border
-		b.fields[fieldIdx(x, 0)].addWall(South)                // bottom border
+	for x := 0; x < numBoardField; x++ {
+		b.Fields[coord.Ctob(x, numBoardField-1)].addWall(NorthWall) // top border
+		b.Fields[coord.Ctob(x, 0)].addWall(SouthWall)               // bottom border
 	}
-	for y := 0; y < numBoardFields; y++ {
-		b.fields[fieldIdx(0, y)].addWall(West)                // left border
-		b.fields[fieldIdx(numBoardFields-1, y)].addWall(East) // right border
+	for y := 0; y < numBoardField; y++ {
+		b.Fields[coord.Ctob(0, y)].addWall(WestWall)               // left border
+		b.Fields[coord.Ctob(numBoardField-1, y)].addWall(EastWall) // right border
 	}
 
 	// set center walls
-	b.fields[fieldIdx(numTileFields-1, numTileFields-1)].addWall(West, South) // bottom left center field
-	b.fields[fieldIdx(numTileFields-1, numTileFields)].addWall(West, North)   // top left center field
-	b.fields[fieldIdx(numTileFields, numTileFields-1)].addWall(East, South)   // bottom right center field
-	b.fields[fieldIdx(numTileFields, numTileFields)].addWall(East, North)     // top right center field
+	b.Fields[coord.Ctob(numTileField-1, numTileField-1)].addWall(WestWall, SouthWall) // bottom left center field
+	b.Fields[coord.Ctob(numTileField-1, numTileField)].addWall(WestWall, NorthWall)   // top left center field
+	b.Fields[coord.Ctob(numTileField, numTileField-1)].addWall(EastWall, SouthWall)   // bottom right center field
+	b.Fields[coord.Ctob(numTileField, numTileField)].addWall(EastWall, NorthWall)     // top right center field
 
 	// finally: set neighbor walls
-	for x := 0; x < numBoardFields; x++ {
-		for y := 0; y < numBoardFields; y++ {
-			idx := fieldIdx(x, y)
-			if !b.fields[idx].hasWall(North) && y < numBoardFields-1 && b.fields[fieldIdx(x, y+1)].hasWall(South) { // north neighbor
-				b.fields[idx].addWall(North)
+	for x := 0; x < numBoardField; x++ {
+		for y := 0; y < numBoardField; y++ {
+			// if west field has east wall -> set west wall
+			if x > 0 && b.Field(x-1, y).hasWall(EastWall) {
+				b.Field(x, y).addWall(WestWall)
 			}
-			if !b.fields[idx].hasWall(East) && x < numBoardFields-1 && b.fields[fieldIdx(x+1, y)].hasWall(West) { // east neighbor
-				b.fields[idx].addWall(East)
+			// if east field has west wall -> set east wall
+			if x < (numBoardField-1) && b.Field(x+1, y).hasWall(WestWall) {
+				b.Field(x, y).addWall(EastWall)
 			}
-			if !b.fields[idx].hasWall(South) && y > 0 && b.fields[fieldIdx(x, y-1)].hasWall(North) { // south neighbor
-				b.fields[idx].addWall(South)
+			// if south field has north wall -> set south wall
+			if y > 0 && b.Field(x, y-1).hasWall(NorthWall) {
+				b.Field(x, y).addWall(SouthWall)
 			}
-			if !b.fields[idx].hasWall(West) && x > 0 && b.fields[fieldIdx(x-1, y)].hasWall(East) { // west neighbor
-				b.fields[idx].addWall(West)
+			// if north field has south wall -> set north wall
+			if y < (numBoardField-1) && b.Field(x, y+1).hasWall(SouthWall) {
+				b.Field(x, y).addWall(NorthWall)
 			}
 		}
 	}
 
 	// calculate routes
-	for x0 := 0; x0 < numBoardFields; x0++ {
-		for y0 := 0; y0 < numBoardFields; y0++ {
+	for x0 := 0; x0 < numBoardField; x0++ {
+		for y0 := 0; y0 < numBoardField; y0++ {
 			field := b.Field(x0, y0)
-			for _, direction := range Directions {
-				if x, y, ok := b.calculateTarget(x0, y0, direction); ok {
-					field.targets[direction] = Coordinate{X: x, Y: y}
-				}
+			for dir := types.Dir(0); dir < types.NumDir; dir++ {
+				field.Targets[dir] = coord.Ctob(b.calculateTarget(x0, y0, dir))
 			}
 		}
 	}
@@ -286,12 +181,12 @@ func New(tileIDMap map[TilePosition]string) *Board {
 // IsValidCoordinate returns true if the coordinate represents a valid board field, false otherwise.
 func (b *Board) IsValidCoordinate(x, y int) bool {
 	// in range ?
-	if x < 0 || x >= numBoardFields || y < 0 || y >= numBoardFields {
+	if x < 0 || x >= numBoardField || y < 0 || y >= numBoardField {
 		return false
 	}
 	// center field ?
-	c1 := numTileFields - 1
-	c2 := numTileFields
+	c1 := numTileField - 1
+	c2 := numTileField
 	if x >= c1 && x <= c2 && y >= c1 && y <= c2 {
 		return false
 	}
@@ -299,105 +194,84 @@ func (b *Board) IsValidCoordinate(x, y int) bool {
 }
 
 // Field returns the board field at position x,y.
-func (b *Board) Field(x, y int) *Field { return b.fields[fieldIdx(x, y)] }
+func (b *Board) Field(x, y int) *Field { return b.Fields[coord.Ctob(x, y)] }
 
-// TargetCoordinate returns the coordinate of the target.
-func (b *Board) TargetCoordinate(symbol Symbol, color Color) (x, y int) {
-	for idx, field := range b.fields {
-		if field.symbol == symbol && field.color == color {
-			return fieldCoord(idx)
+// TargetCoord returns the coordinate of the target.
+func (b *Board) TargetCoord(symbol Symbol, color types.Color) byte {
+	for idx, field := range b.Fields {
+		if field.Symbol == symbol && field.Color == color {
+			return byte(idx)
 		}
 	}
 	panic(fmt.Errorf("invalid target: symbol %s color %s", symbol, color)) // should never happen
 }
 
-// Move returns the coordinate of a target field moving a robot in one of the directions.
+// MinMoves calculates the minimal moves from each field to the target field.
+func (b *Board) MinMoves(cr byte) [NumField]int {
+	var minMoves [NumField]int
 
-func (b *Board) moveNorth(robots map[Color]Coordinate, color Color) (x, y int, ok bool) {
-	// handle redirects here
-	// field needs to handle redirection as a boarder
-	// routes needs to deliver redirect field coords
-	robot := robots[color]
-	field := b.Field(robot.X, robot.Y)
-	target, ok := field.targets[North]
-	if !ok {
-		return robot.X, robot.Y, false
+	// init
+	for i := 0; i < NumField; i++ {
+		minMoves[i] = -1
 	}
-	for otherColor, otherRobot := range robots {
-		if otherColor != color && otherRobot.X == robot.X && otherRobot.Y > robot.Y && otherRobot.Y <= target.Y {
-			target.Y = otherRobot.Y - 1
+
+	minMoves[cr] = 0
+	hsource := []byte{cr}
+	vsource := []byte{cr}
+	htarget := []byte{}
+	vtarget := []byte{}
+
+	moves := 0
+	for len(hsource) != 0 || len(vsource) != 0 {
+		moves++
+		for _, ch := range hsource {
+			x0, y0 := coord.Btoc(ch)
+
+			x := x0
+			for !b.Field(x, y0).hasWall(WestWall) {
+				x--
+				c := coord.Ctob(x, y0)
+				if minMoves[c] == -1 {
+					minMoves[c] = moves
+					vtarget = append(vtarget, c)
+				}
+			}
+			x = x0
+			for !b.Field(x, y0).hasWall(EastWall) {
+				x++
+				c := coord.Ctob(x, y0)
+				if minMoves[c] == -1 {
+					minMoves[c] = moves
+					vtarget = append(vtarget, c)
+				}
+			}
 		}
-	}
-	if target.X == robot.X && target.Y == robot.Y {
-		return robot.X, robot.Y, false
-	}
-	return target.X, target.Y, true
-}
 
-func (b *Board) moveEast(robots map[Color]Coordinate, color Color) (x, y int, ok bool) {
-	// handle redirects here
-	// field needs to handle redirection as a boarder
-	// routes needs to deliver redirect field coords
-	robot := robots[color]
-	field := b.Field(robot.X, robot.Y)
-	target, ok := field.targets[East]
-	if !ok {
-		return robot.X, robot.Y, false
-	}
-	for otherColor, otherRobot := range robots {
-		if otherColor != color && otherRobot.Y == robot.Y && otherRobot.X > robot.X && otherRobot.X <= target.X {
-			target.X = otherRobot.X - 1
+		for _, cv := range vsource {
+			x0, y0 := coord.Btoc(cv)
+
+			y := y0
+			for !b.Field(x0, y).hasWall(SouthWall) {
+				y--
+				c := coord.Ctob(x0, y)
+				if minMoves[c] == -1 {
+					minMoves[c] = moves
+					htarget = append(htarget, c)
+				}
+			}
+			y = y0
+			for !b.Field(x0, y).hasWall(NorthWall) {
+				y++
+				c := coord.Ctob(x0, y)
+				if minMoves[c] == -1 {
+					minMoves[c] = moves
+					htarget = append(htarget, c)
+				}
+			}
 		}
-	}
-	if target.X == robot.X && target.Y == robot.Y {
-		return robot.X, robot.Y, false
-	}
-	return target.X, target.Y, true
-}
 
-func (b *Board) moveSouth(robots map[Color]Coordinate, color Color) (x, y int, ok bool) {
-	// handle redirects here
-	// field needs to handle redirection as a boarder
-	// routes needs to deliver redirect field coords
-	robot := robots[color]
-	field := b.Field(robot.X, robot.Y)
-	target, ok := field.targets[South]
-	if !ok {
-		return robot.X, robot.Y, false
+		hsource, vsource = htarget, vtarget
+		htarget, vtarget = nil, nil
 	}
-	for otherColor, otherRobot := range robots {
-		if otherColor != color && otherRobot.X == robot.X && otherRobot.Y < robot.Y && otherRobot.Y >= target.Y {
-			target.Y = otherRobot.Y + 1
-		}
-	}
-	if target.X == robot.X && target.Y == robot.Y {
-		return robot.X, robot.Y, false
-	}
-	return target.X, target.Y, true
-}
-
-func (b *Board) moveWest(robots map[Color]Coordinate, color Color) (x, y int, ok bool) {
-	// handle redirects here
-	// field needs to handle redirection as a boarder
-	// routes needs to deliver redirect field coords
-	robot := robots[color]
-	field := b.Field(robot.X, robot.Y)
-	target, ok := field.targets[West]
-	if !ok {
-		return robot.X, robot.Y, false
-	}
-	for otherColor, otherRobot := range robots {
-		if otherColor != color && otherRobot.Y == robot.Y && otherRobot.X < robot.X && otherRobot.X >= target.X {
-			target.X = otherRobot.X + 1
-		}
-	}
-	if target.X == robot.X && target.Y == robot.Y {
-		return robot.X, robot.Y, false
-	}
-	return target.X, target.Y, true
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (b *Board) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.fields)
+	return minMoves
 }
