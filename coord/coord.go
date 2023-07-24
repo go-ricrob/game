@@ -1,5 +1,9 @@
-// Package coord defines functions for coordinate conversions.
+// Package coord defines types and functions for coordinate conversions.
 package coord
+
+type XY struct {
+	X, Y int
+}
 
 // Ctob converts a x,y coordinate with x,y < 16 to a coordinate byte.
 func Ctob(x, y int) byte { return byte(x)<<4 | byte(y) }

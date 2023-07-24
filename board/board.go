@@ -58,7 +58,7 @@ type Field struct {
 	Walls   Wall        `json:"walls,omitempty"`
 	Symbol  Symbol      `json:"symbol,omitempty"`
 	Color   types.Color `json:"color,omitempty"`
-	Targets [types.NumDir]byte
+	Targets [types.NumDir]int
 }
 
 func (f *Field) String() string {
@@ -78,30 +78,32 @@ type Board struct {
 	Fields [NumField]*Field
 }
 
-func (b *Board) calculateTarget(x0, y0 int, dir types.Dir) (int, int) {
-	x, y := x0, y0
-
-	switch dir {
-	default:
-		panic(fmt.Sprintf("invalid direction %s", dir))
-	case types.East:
-		for b.Field(x, y0).Walls&EastWall == 0 {
-			x++
-		}
-	case types.West:
-		for b.Field(x, y0).Walls&WestWall == 0 {
-			x--
-		}
-	case types.North:
-		for b.Field(x0, y).Walls&NorthWall == 0 {
-			y++
-		}
-	case types.South:
-		for b.Field(x0, y).Walls&SouthWall == 0 {
-			y--
-		}
+func (b *Board) calcEastTarget(x, y int) int {
+	for b.Field(x, y).Walls&EastWall == 0 {
+		x++
 	}
-	return x, y
+	return x
+}
+
+func (b *Board) calcWestTarget(x, y int) int {
+	for b.Field(x, y).Walls&WestWall == 0 {
+		x--
+	}
+	return x
+}
+
+func (b *Board) calcNorthTarget(x, y int) int {
+	for b.Field(x, y).Walls&NorthWall == 0 {
+		y++
+	}
+	return y
+}
+
+func (b *Board) calcSouthTarget(x, y int) int {
+	for b.Field(x, y).Walls&SouthWall == 0 {
+		y--
+	}
+	return y
 }
 
 // New creates a new board instance. Parameter tiles needs to be valid - if not NewBoard will panic.
@@ -166,12 +168,13 @@ func New(tileIDs [NumTile]string) *Board {
 	}
 
 	// calculate routes
-	for x0 := 0; x0 < numBoardField; x0++ {
-		for y0 := 0; y0 < numBoardField; y0++ {
-			field := b.Field(x0, y0)
-			for dir := types.Dir(0); dir < types.NumDir; dir++ {
-				field.Targets[dir] = coord.Ctob(b.calculateTarget(x0, y0, dir))
-			}
+	for x := 0; x < numBoardField; x++ {
+		for y := 0; y < numBoardField; y++ {
+			field := b.Field(x, y)
+			field.Targets[types.East] = b.calcEastTarget(x, y)
+			field.Targets[types.West] = b.calcWestTarget(x, y)
+			field.Targets[types.North] = b.calcNorthTarget(x, y)
+			field.Targets[types.South] = b.calcSouthTarget(x, y)
 		}
 	}
 
