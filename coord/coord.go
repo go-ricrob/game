@@ -1,6 +1,7 @@
 // Package coord defines types and functions for coordinate conversions.
 package coord
 
+// XY represents a two dimensional x,y coordinate.
 type XY struct {
 	X, Y int
 }

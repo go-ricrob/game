@@ -52,6 +52,7 @@ var wallRotations = [NumTile]rotate{
 	BottomLeft:  func(w Wall) Wall { return rotateWalls(w, 2) }, // rotate 180 degree - right bit shift 2
 }
 
+// Targets represents the target fields for a robot source field combination.
 type Targets struct {
 	North, South, East, West coord.XY
 }
