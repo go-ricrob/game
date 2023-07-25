@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-ricrob/game/coord"
-	"github.com/go-ricrob/game/types"
 )
 
 const (
@@ -53,12 +52,43 @@ var wallRotations = [NumTile]rotate{
 	BottomLeft:  func(w Wall) Wall { return rotateWalls(w, 2) }, // rotate 180 degree - right bit shift 2
 }
 
+type Targets struct {
+	North, South, East, West coord.XY
+}
+
+func (t *Targets) calcTargets(b *Board, x0, y0 int) {
+	// north
+	y := y0
+	for b.Field(x0, y).Walls&NorthWall == 0 {
+		y++
+	}
+	t.North.X, t.North.Y = x0, y
+	// south
+	y = y0
+	for b.Field(x0, y).Walls&SouthWall == 0 {
+		y--
+	}
+	t.South.X, t.South.Y = x0, y
+	// east
+	x := x0
+	for b.Field(x, y).Walls&EastWall == 0 {
+		x++
+	}
+	t.East.X, t.East.Y = x, y0
+	// west
+	x = x0
+	for b.Field(x, y).Walls&WestWall == 0 {
+		x--
+	}
+	t.West.X, t.West.Y = x, y0
+}
+
 // Field is the type representing a field of a board.
 type Field struct {
-	Walls   Wall        `json:"walls,omitempty"`
-	Symbol  Symbol      `json:"symbol,omitempty"`
-	Color   types.Color `json:"color,omitempty"`
-	Targets [types.NumDir]int
+	Walls   Wall   `json:"walls,omitempty"`
+	Symbol  Symbol `json:"symbol,omitempty"`
+	Color   Color  `json:"color,omitempty"`
+	Targets Targets
 }
 
 func (f *Field) String() string {
@@ -76,34 +106,6 @@ func (f *Field) addWall(walls ...Wall) {
 // Board is the type representing a board.
 type Board struct {
 	Fields [NumField]*Field
-}
-
-func (b *Board) calcEastTarget(x, y int) int {
-	for b.Field(x, y).Walls&EastWall == 0 {
-		x++
-	}
-	return x
-}
-
-func (b *Board) calcWestTarget(x, y int) int {
-	for b.Field(x, y).Walls&WestWall == 0 {
-		x--
-	}
-	return x
-}
-
-func (b *Board) calcNorthTarget(x, y int) int {
-	for b.Field(x, y).Walls&NorthWall == 0 {
-		y++
-	}
-	return y
-}
-
-func (b *Board) calcSouthTarget(x, y int) int {
-	for b.Field(x, y).Walls&SouthWall == 0 {
-		y--
-	}
-	return y
 }
 
 // New creates a new board instance. Parameter tiles needs to be valid - if not NewBoard will panic.
@@ -171,10 +173,7 @@ func New(tileIDs [NumTile]string) *Board {
 	for x := 0; x < numBoardField; x++ {
 		for y := 0; y < numBoardField; y++ {
 			field := b.Field(x, y)
-			field.Targets[types.East] = b.calcEastTarget(x, y)
-			field.Targets[types.West] = b.calcWestTarget(x, y)
-			field.Targets[types.North] = b.calcNorthTarget(x, y)
-			field.Targets[types.South] = b.calcSouthTarget(x, y)
+			field.Targets.calcTargets(b, x, y)
 		}
 	}
 
@@ -200,7 +199,7 @@ func (b *Board) IsValidCoordinate(x, y int) bool {
 func (b *Board) Field(x, y int) *Field { return b.Fields[coord.Ctob(x, y)] }
 
 // TargetCoord returns the coordinate of the target.
-func (b *Board) TargetCoord(symbol Symbol, color types.Color) byte {
+func (b *Board) TargetCoord(symbol Symbol, color Color) byte {
 	for idx, field := range b.Fields {
 		if field.Symbol == symbol && field.Color == color {
 			return byte(idx)

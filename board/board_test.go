@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/go-ricrob/game/coord"
-	. "github.com/go-ricrob/game/types"
 )
 
 func TestBoard(t *testing.T) {
