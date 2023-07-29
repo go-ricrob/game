@@ -86,10 +86,10 @@ func (t *Targets) calcTargets(b *Board, x0, y0 int) {
 
 // Field is the type representing a field of a board.
 type Field struct {
-	Walls   Wall   `json:"walls,omitempty"`
-	Symbol  Symbol `json:"symbol,omitempty"`
-	Color   Color  `json:"color,omitempty"`
-	Targets Targets
+	Walls   Wall    `json:"walls,omitempty"`
+	Symbol  Symbol  `json:"symbol,omitempty"`
+	Color   Color   `json:"color,omitempty"`
+	Targets Targets `json:"-"`
 }
 
 func (f *Field) String() string {
