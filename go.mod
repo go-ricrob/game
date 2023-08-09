@@ -1,3 +1,3 @@
 module github.com/go-ricrob/game
 
-go 1.20
+go 1.21
